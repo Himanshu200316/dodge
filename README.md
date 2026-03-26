@@ -1,4 +1,70 @@
-# SAP O2C — Graph Query Interface
+Order-to-Cash Graph Explorer
+Developer: Himanshu Negi
+
+Tech Stack: Streamlit, Neo4j, Groq (Llama 3), Pyvis
+
+This project provides an interactive dashboard to visualize and query "Order to Cash" business processes. It uses a Graph-RAG approach where an LLM (via Groq) translates natural language into Cypher queries to interact with a local Neo4j database.
+
+🚀 1. Prerequisites
+Before running the app, ensure you have the following installed:z
+<img width="1920" height="885" alt="Screenshot (180)" src="https://github.com/user-attachments/assets/cfd3eb76-46dd-4ad2-a4e2-64b6d3d68616" />
+<img width="1920" height="878" alt="Screenshot (181)" src="https://github.com/user-attachments/assets/2c8a49e9-59b3-402d-9b38-cd2dbff2a5ad" />
+
+
+Python 3.8+
+
+Neo4j Desktop: Download here
+
+Groq API Key: Get your free key here (No credit card required).
+
+🛠️ 2. Local Neo4j Setup
+Create a Database: Open Neo4j Desktop and create a new project.
+
+Start the Instance: Click Start on your database. Ensure the status turns green.
+
+Note Credentials: * URI: bolt://127.0.0.1:7687
+
+User: neo4j (default)
+
+Password: The password you set during creation.
+
+📦 3. Installation
+Clone your repository and install the dependencies:
+
+Bash
+pip install streamlit neo4j groq textblob pyvis
+⚙️ 4. Configuration (.env or Streamlit Secrets)
+Create a file named .env in your root directory (or enter these directly into the Streamlit sidebar if you've enabled the "Key Switcher"):
+
+Plaintext
+GROQ_API_KEY=your_groq_key_here
+NEO4J_URI=bolt://127.0.0.1:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+📂 5. How the Code Works
+The app.py file is optimized for low-spec devices and API limits using two core patterns:
+
+A. The Node Library (Schema Mapping)
+Instead of asking the LLM to "scan" your database (which is slow and expensive), we provide a hardcoded Node Library. This tells the AI exactly what labels and properties exist.
+
+Benefit: Reduces input tokens by ~70%.
+
+B. Sliding Window Memory
+The chat sidebar only remembers the last 3 interactions.
+
+Benefit: Prevents the app from lagging as the conversation gets longer.
+
+🏃 6. Running the Application
+Launch the dashboard from your terminal:
+
+Bash
+streamlit run app.py
+Using the Dashboard:
+The Graph: Click and drag nodes to explore relationships. Hover over nodes to see metadata.
+
+The Sidebar: Type questions like "Find all pending invoices over $500" or "Which customers have not received their delivery?"
+
+API Fallback: If you hit a rate limit, use the sidebar input to swap in a different Groq or Gemini key.# SAP O2C — Graph Query Interface
 
 An interactive Streamlit application that lets you query a Neo4j graph database
 containing SAP Order-to-Cash data using natural language. Powered by Google Gemini
