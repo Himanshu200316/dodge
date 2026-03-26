@@ -1,0 +1,162 @@
+{
+  "file_mapping": {
+    "products/*": {
+      "node_label": "Product",
+      "primary_key_source": "product",
+      "primary_key_target": "material",
+      "load_order": 1,
+      "cypher_script": "02_ingest_products.cypher"
+    },
+    "product_descriptions/*": {
+      "action": "ENRICH",
+      "target_label": "Product",
+      "join_key_source": "product",
+      "join_key_target": "material",
+      "load_order": 2,
+      "cypher_script": "02_ingest_products.cypher"
+    },
+    "business_partners/*": {
+      "node_label": "Customer",
+      "primary_key_source": "businessPartner",
+      "primary_key_target": "soldToParty",
+      "load_order": 3,
+      "cypher_script": "03_ingest_customers.cypher"
+    },
+    "sales_order_headers/*": {
+      "node_label": "SalesDocument",
+      "primary_key_source": "salesOrder",
+      "primary_key_target": "documentId",
+      "set_property": {
+        "sdDocumentCategory": "ORDER"
+      },
+      "relationships": [
+        {
+          "type": "PLACED_ORDER",
+          "direction": "(Customer)-[:PLACED_ORDER]->(SalesDocument)",
+          "join_key": "soldToParty"
+        }
+      ],
+      "load_order": 4,
+      "cypher_script": "04_ingest_sales_orders.cypher"
+    },
+    "outbound_delivery_headers/*": {
+      "node_label": "SalesDocument",
+      "primary_key_source": "deliveryDocument",
+      "primary_key_target": "documentId",
+      "set_property": {
+        "sdDocumentCategory": "DELIVERY"
+      },
+      "load_order": 5,
+      "cypher_script": "05_ingest_deliveries.cypher"
+    },
+    "outbound_delivery_items/*": {
+      "action": "RELATIONSHIP_ONLY",
+      "relationships": [
+        {
+          "type": "FULFILLED_BY",
+          "direction": "(SalesDocument:ORDER)-[:FULFILLED_BY]->(SalesDocument:DELIVERY)",
+          "from_key_source": "referenceSdDocument",
+          "from_key_target": "documentId",
+          "to_key_source": "deliveryDocument",
+          "to_key_target": "documentId"
+        }
+      ],
+      "load_order": 6,
+      "cypher_script": "05_ingest_deliveries.cypher"
+    },
+    "billing_document_headers/*": {
+      "node_label": "BillingDocument",
+      "primary_key_source": "billingDocument",
+      "primary_key_target": "billingDocument",
+      "load_order": 7,
+      "cypher_script": "06_ingest_billing.cypher"
+    },
+    "billing_document_cancellations/*": {
+      "node_label": "BillingDocument",
+      "primary_key_source": "billingDocument",
+      "primary_key_target": "billingDocument",
+      "note": "Same schema as headers. MERGE deduplicates across files.",
+      "load_order": 8,
+      "cypher_script": "06_ingest_billing.cypher"
+    },
+    "billing_document_items/*": {
+      "action": "RELATIONSHIP_ONLY",
+      "relationships": [
+        {
+          "type": "GENERATED_BILL",
+          "direction": "(SalesDocument)-[:GENERATED_BILL]->(BillingDocument)",
+          "from_key_source": "referenceSdDocument",
+          "from_key_target": "documentId",
+          "to_key_source": "billingDocument",
+          "to_key_target": "billingDocument"
+        },
+        {
+          "type": "INVOICED_PRODUCT",
+          "direction": "(BillingDocument)-[:INVOICED_PRODUCT]->(Product)",
+          "from_key_source": "billingDocument",
+          "from_key_target": "billingDocument",
+          "to_key_source": "material",
+          "to_key_target": "material",
+          "relationship_properties": [
+            "billingDocumentItem",
+            "billingQuantity",
+            "netAmount",
+            "transactionCurrency",
+            "billingQuantityUnit"
+          ]
+        }
+      ],
+      "load_order": 9,
+      "cypher_script": "06_ingest_billing.cypher"
+    }
+  },
+  "actual_files": {
+    "products": [
+      "part-20251119-133438-390.jsonl",
+      "part-20251119-133438-730.jsonl"
+    ],
+    "product_descriptions": [
+      "part-20251119-133438-106.jsonl",
+      "part-20251119-133438-991.jsonl"
+    ],
+    "business_partners": [
+      "part-20251119-133435-168.jsonl"
+    ],
+    "sales_order_headers": [
+      "part-20251119-133429-440.jsonl"
+    ],
+    "sales_order_items": [
+      "part-20251119-133429-452.jsonl",
+      "part-20251119-133430-214.jsonl"
+    ],
+    "outbound_delivery_headers": [
+      "part-20251119-133431-414.jsonl"
+    ],
+    "outbound_delivery_items": [
+      "part-20251119-133431-439.jsonl",
+      "part-20251119-133431-626.jsonl"
+    ],
+    "billing_document_headers": [
+      "part-20251119-133433-228.jsonl",
+      "part-20251119-133433-936.jsonl"
+    ],
+    "billing_document_cancellations": [
+      "part-20251119-133433-51.jsonl"
+    ],
+    "billing_document_items": [
+      "part-20251119-133432-233.jsonl",
+      "part-20251119-133432-978.jsonl"
+    ]
+  },
+  "type_casting_rules": {
+    "netAmount": "toFloat()",
+    "totalNetAmount": "toFloat()",
+    "billingQuantity": "toInteger()",
+    "requestedQuantity": "toInteger()",
+    "grossWeight": "toFloat()",
+    "netWeight": "toFloat()",
+    "creationDate": "date(substring(value, 0, 10))",
+    "billingDocumentDate": "date(substring(value, 0, 10))",
+    "actualGoodsMovementDate": "date(substring(value, 0, 10))"
+  }
+}
